@@ -53,7 +53,7 @@ public class ApplicationTest {
     // Assert that it completed in the right end event, and that a Spring Bean hooked into the service task has written the expected process variable
     assertThat(processInstance) //
       .isCompleted() //
-      .hasCompletedElements("Event_GreaterThan5");
+      .hasCompletedElements("EndEvent_GreaterThan5");
 
     // Additional check to verify the expression is working properly
     assertThat(processInstance).hasVariableNames("theAnswer");
@@ -73,7 +73,7 @@ public class ApplicationTest {
     // increase time so that the timer event is triggered and the process moves on
     processTestContext.increaseTime(Duration.ofMinutes(6));
     
-    assertThat(processInstance).isCompleted().hasCompletedElements("Event_SmallerThan5");
+    assertThat(processInstance).isCompleted().hasCompletedElements("EndEvent_SmallerThan5");
   }
 
 }

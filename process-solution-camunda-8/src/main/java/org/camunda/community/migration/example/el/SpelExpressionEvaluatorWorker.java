@@ -21,52 +21,52 @@ import io.camunda.spring.client.annotation.JobWorker;
 @Component
 public class SpelExpressionEvaluatorWorker {
 
-	private final ApplicationContext applicationContext;
-	private final ExpressionParser parser;
+  private final ApplicationContext applicationContext;
+  private final ExpressionParser parser;
 
-	@Autowired
-	public SpelExpressionEvaluatorWorker(ApplicationContext applicationContext) {
-		this.applicationContext = applicationContext;
-		parser = new SpelExpressionParser();
-	}
+  @Autowired
+  public SpelExpressionEvaluatorWorker(ApplicationContext applicationContext) {
+    this.applicationContext = applicationContext;
+    parser = new SpelExpressionParser();
+  }
 
-	public Object evaluate(String expression, Map<String, Object> variables) {
-		StandardEvaluationContext context = new StandardEvaluationContext();
+  @JobWorker(type = "ExpressionEvaluatorWorker")
+  public Map<String, Object> executeJobMigrated(ActivatedJob job) throws Exception {
+    Map<String, Object> resultMap = new HashMap<>();
 
-		// Register variables
-		variables.forEach(context::setVariable);
+    String expression = juelToSpel(job.getCustomHeaders().get("expression"));
 
-		// Optional: expose Spring beans if needed
-		context.setBeanResolver((ctx, beanName) -> applicationContext.getBean(beanName));
+    Object result = evaluate(expression, job.getVariablesAsMap());
+    String resultVariable = job.getCustomHeaders().get("resultVariable");
 
-		return parser.parseExpression(expression).getValue(context);
-	}
+    resultMap.put(resultVariable, result);
+    return resultMap;
+  }
 
-	@JobWorker(type = "ExpressionEvaluatorWorker")
-	public Map<String, Object> executeJobMigrated(ActivatedJob job) throws Exception {
-		Map<String, Object> resultMap = new HashMap<>();
-		
-	    String expression = juelToSpel(job.getCustomHeaders().get("expression"));
-		
-		Object result = evaluate(expression, job.getVariablesAsMap());
-	    String resultVariable = job.getCustomHeaders().get("resultVariable");
-		
-		resultMap.put(resultVariable, result);
-		return resultMap;
-	}
+  public Object evaluate(String expression, Map<String, Object> variables) {
+    StandardEvaluationContext context = new StandardEvaluationContext();
 
-	private String juelToSpel(String expression) {
-		expression = expression.trim();
+    // Register variables
+    variables.forEach(context::setVariable);
 
-		// Strip "#{...}" if present
-		if (expression.startsWith("#{") && expression.endsWith("}")) {
-			expression = expression.substring(2, expression.length() - 1);
-		}
-		// Strip "${...}" if present
-		if (expression.startsWith("${") && expression.endsWith("}")) {
-			expression = expression.substring(2, expression.length() - 1);
-		}
+    // Optional: expose Spring beans if needed
+    context.setBeanResolver((ctx, beanName) -> applicationContext.getBean(beanName));
 
-		return expression;
-	}
+    return parser.parseExpression(expression).getValue(context);
+  }
+
+  private String juelToSpel(String expression) {
+    expression = expression.trim();
+
+    // Strip "#{...}" if present
+    if (expression.startsWith("#{") && expression.endsWith("}")) {
+      expression = expression.substring(2, expression.length() - 1);
+    }
+    // Strip "${...}" if present
+    if (expression.startsWith("${") && expression.endsWith("}")) {
+      expression = expression.substring(2, expression.length() - 1);
+    }
+
+    return expression;
+  }
 }

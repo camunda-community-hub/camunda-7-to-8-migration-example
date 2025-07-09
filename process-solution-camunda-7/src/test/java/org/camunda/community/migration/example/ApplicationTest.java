@@ -32,7 +32,7 @@ public class ApplicationTest {
     // complete that task, so that the process instance advances
     complete(task());
     // Assert that it completed in the right end event, and that a Spring Bean hooked into the service task has written the expected process variable
-    assertThat(processInstance).isEnded().hasPassed("Event_GreaterThan5");
+    assertThat(processInstance).isEnded().hasPassed("EndEvent_GreaterThan5");
     assertThat(processInstance).variables().containsEntry("theAnswer", 42);
   }
 
@@ -50,6 +50,6 @@ public class ApplicationTest {
     managementService().executeJob(timerJob.getId());
 
     
-    assertThat(processInstance).isEnded().hasPassed("Event_SmallerThan5");
+    assertThat(processInstance).isEnded().hasPassed("EndEvent_SmallerThan5");
   }
 }

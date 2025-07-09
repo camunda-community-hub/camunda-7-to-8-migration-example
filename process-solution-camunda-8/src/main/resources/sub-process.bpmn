@@ -4,12 +4,12 @@
     <bpmn:startEvent id="StartEvent_1">
       <bpmn:outgoing>Flow_1yz1hm4</bpmn:outgoing>
     </bpmn:startEvent>
-    <bpmn:sequenceFlow id="Flow_1yz1hm4" sourceRef="StartEvent_1" targetRef="Activity_1ufc7m0" />
+    <bpmn:sequenceFlow id="Flow_1yz1hm4" sourceRef="StartEvent_1" targetRef="Task_JavaDelegateExpression" />
     <bpmn:endEvent id="Event_09ordlq">
       <bpmn:incoming>Flow_1qovl9n</bpmn:incoming>
     </bpmn:endEvent>
-    <bpmn:sequenceFlow id="Flow_1qovl9n" sourceRef="Activity_1ufc7m0" targetRef="Event_09ordlq" />
-    <bpmn:sendTask id="Activity_1ufc7m0" name="Java Delegate Expression" implementation="##WebService">
+    <bpmn:sequenceFlow id="Flow_1qovl9n" sourceRef="Task_JavaDelegateExpression" targetRef="Event_09ordlq" />
+    <bpmn:sendTask id="Task_JavaDelegateExpression" name="Java Delegate Expression" implementation="##WebService">
       <bpmn:extensionElements>
         <conversion:message severity="TASK">Attribute 'delegateExpression' on 'sendTask' was mapped. Delegate call to '#{sampleJavaDelegate}' was transformed to job type 'camunda-7-adapter'. Please review your implementation.</conversion:message>
         <zeebe:taskHeaders>
@@ -29,7 +29,7 @@
       <bpmndi:BPMNShape id="Event_09ordlq_di" bpmnElement="Event_09ordlq">
         <dc:Bounds x="432" y="99" width="36" height="36" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_0eqlcs9_di" bpmnElement="Activity_1ufc7m0">
+      <bpmndi:BPMNShape id="Activity_0eqlcs9_di" bpmnElement="Task_JavaDelegateExpression">
         <dc:Bounds x="270" y="77" width="100" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Flow_1yz1hm4_di" bpmnElement="Flow_1yz1hm4">

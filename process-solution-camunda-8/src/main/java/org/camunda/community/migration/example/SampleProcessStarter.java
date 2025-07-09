@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 
 import io.camunda.client.CamundaClient;
 import io.camunda.client.api.response.ProcessInstanceEvent;
-import jakarta.annotation.PostConstruct;
 
 @Component
 @Profile("!test")
@@ -18,8 +17,7 @@ public class SampleProcessStarter {
 	@Autowired
 	private CamundaClient processEngine;
 	
-	@PostConstruct
-	public void startOneProcess() {
+	public void startSomeProcesses() {
     System.out.println( "Let's start some processes to have data in the system..." );
     
     Random random = new Random();

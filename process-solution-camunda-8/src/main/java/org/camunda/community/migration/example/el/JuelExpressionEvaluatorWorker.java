@@ -26,62 +26,79 @@ import io.camunda.spring.client.annotation.JobWorker;
 @Component
 public class JuelExpressionEvaluatorWorker {
 
-    private final ApplicationContext applicationContext;
-    private final ExpressionFactory expressionFactory;
+  private final ApplicationContext applicationContext;
+  private final ExpressionFactory expressionFactory;
 
-	@Autowired
-	public JuelExpressionEvaluatorWorker(ApplicationContext applicationContext) {
-		this.applicationContext = applicationContext;
-        this.expressionFactory = ExpressionFactory.newInstance();
-    }
+  @Autowired
+  public JuelExpressionEvaluatorWorker(ApplicationContext applicationContext) {
+    this.applicationContext = applicationContext;
+    this.expressionFactory = ExpressionFactory.newInstance();
+  }
 
-    public Object evaluate(String expression, Map<String, Object> variables) {
-        CompositeELResolver compositeResolver = new CompositeELResolver();
+  @JobWorker(type = "JuelExpressionEvaluatorWorker")
+  public Map<String, Object> executeJobMigrated(ActivatedJob job) throws Exception {
+    Map<String, Object> resultMap = new HashMap<>();
 
-        // 1. Variables from the job (highest priority)
-        compositeResolver.add(new ELResolver() {
-            @Override
-            public Object getValue(ELContext context, Object base, Object property) {
-                if (base == null && property != null) {
-                    String name = property.toString();
-                    if (variables.containsKey(name)) {
-                        context.setPropertyResolved(true);
-                        return variables.get(name);
-                    }
-                    if (applicationContext.containsBean(name)) {
-                        context.setPropertyResolved(true);
-                        return applicationContext.getBean(name);
-                    }
-                }
-                return null;
-            }
+    String expression = job.getCustomHeaders().get("expression");
 
-            @Override public Class<?> getType(ELContext context, Object base, Object property) { return Object.class; }
-            @Override public void setValue(ELContext context, Object base, Object property, Object value) {}
-            @Override public boolean isReadOnly(ELContext context, Object base, Object property) { return true; }
-            @Override public Iterator<FeatureDescriptor> getFeatureDescriptors(ELContext context, Object base) { return null; }
-            @Override public Class<?> getCommonPropertyType(ELContext context, Object base) { return Object.class; }
-        });
+    Object result = evaluate(expression, job.getVariablesAsMap());
+    String resultVariable = job.getCustomHeaders().get("resultVariable");
 
-        StandardELContext elContext = new StandardELContext(expressionFactory);
-        elContext.addELResolver(compositeResolver);
+    resultMap.put(resultVariable, result);
+    return resultMap;
+  }
+  
+  public Object evaluate(String expression, Map<String, Object> variables) {
+    CompositeELResolver compositeResolver = new CompositeELResolver();
 
-        ValueExpression ve = expressionFactory.createValueExpression(elContext, expression, Object.class);
-        return ve.getValue(elContext);
-    }
+    // 1. Variables from the job (highest priority)
+    compositeResolver.add(new ELResolver() {
+      @Override
+      public Object getValue(ELContext context, Object base, Object property) {
+        if (base == null && property != null) {
+          String name = property.toString();
+          if (variables.containsKey(name)) {
+            context.setPropertyResolved(true);
+            return variables.get(name);
+          }
+          if (applicationContext.containsBean(name)) {
+            context.setPropertyResolved(true);
+            return applicationContext.getBean(name);
+          }
+        }
+        return null;
+      }
 
+      @Override
+      public Class<?> getType(ELContext context, Object base, Object property) {
+        return Object.class;
+      }
 
-	@JobWorker(type = "JuelExpressionEvaluatorWorker")
-	public Map<String, Object> executeJobMigrated(ActivatedJob job) throws Exception {
-		Map<String, Object> resultMap = new HashMap<>();
-		
-	    String expression = job.getCustomHeaders().get("expression");
-		
-		Object result = evaluate(expression, job.getVariablesAsMap());
-	    String resultVariable = job.getCustomHeaders().get("resultVariable");
-		
-		resultMap.put(resultVariable, result);
-		return resultMap;
-	}
+      @Override
+      public void setValue(ELContext context, Object base, Object property, Object value) {
+      }
+
+      @Override
+      public boolean isReadOnly(ELContext context, Object base, Object property) {
+        return true;
+      }
+
+      @Override
+      public Iterator<FeatureDescriptor> getFeatureDescriptors(ELContext context, Object base) {
+        return null;
+      }
+
+      @Override
+      public Class<?> getCommonPropertyType(ELContext context, Object base) {
+        return Object.class;
+      }
+    });
+
+    StandardELContext elContext = new StandardELContext(expressionFactory);
+    elContext.addELResolver(compositeResolver);
+
+    ValueExpression ve = expressionFactory.createValueExpression(elContext, expression, Object.class);
+    return ve.getValue(elContext);
+  }
 
 }
