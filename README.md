@@ -278,6 +278,34 @@ Invoking the Spring Bean via JUEL (`#{sampleBean.someMethod(y)}`) requires some 
 
 A sample [JuelExpressionEvaluatorWorker](process-solution-camunda-8/src/main/java/org/camunda/community/migration/example/el/JuelExpressionEvaluatorWorker.java) is contained in this repository. As you can see, this is relatively straightforward, but the complexity depends on what kind of expressions you need to evaluate.
 
+Next up, you should cleanup your Maven dependencies. You can remove all Camunda 7 dependencies, which might also cause changes around the Spring Boot version you are using. In our example - you might simple reduce dependencies to:
+
+```xml
+<properties>
+  <version.camunda>8.8.0-alpha6-rc3</version.camunda> <!-- used at the time of writing as we need an up-to-date alpha for Camunda Process Test -->
+</properties>
+
+<dependencies>
+  <dependency>
+    <groupId>io.camunda</groupId>
+    <artifactId>spring-boot-starter-camunda-sdk</artifactId>
+    <version>${version.camunda}</version>
+  </dependency>
+  <dependency>
+    <groupId>io.camunda</groupId>
+    <artifactId>camunda-process-test-spring</artifactId>
+    <version>${version.camunda}</version>
+    <scope>test</scope>
+  </dependency> 
+  <!-- Used for JUEL evaluation if required -->
+  <dependency>
+    <groupId>org.glassfish</groupId>
+    <artifactId>jakarta.el</artifactId>
+    <version>3.0.4</version>
+  </dependency>
+</dependencies>
+```
+
 Now we are ready to run our solution against Camunda 8 for the first time, as kind of smoke test. The test cases don't yet compile (see below), but let's ignore this for now. You could easily [Download latest Camunda 8 Run](https://downloads.camunda.cloud/release/camunda/c8run/) to run Camunda 8 Run locally. For the Data Migrator to work (see below) you need at least 8.8-alpha6. 
 
 You need to add a line of code to your Spring Boot app to auto-deploy process models during startup, a functionality that was automatically enables in Camunda 7, but provides more manual control in Camunda 8:
@@ -449,3 +477,12 @@ start.bat --runtime
 You should see some logs, but no errors. Afterwards you can find all instances you started in Camunda 7 earlier in Camunda 8, visible via Camunda Operate:
 
 ![Migrated instances in Camunda Operate](operate-migrated.png)
+
+Note that in a real migration scenario, you typically run the following order:
+
+1. Deploy the process model for migration (including the execution listener `migrator`)
+2. Run the Data Migrator
+3. Deploy a process model for production (removing the execution listener `migrator`)
+4. Send production traffic to the system
+
+In the above tutorial, your processes started with application might hang in the start event, if they have the execution listener `migrator` without the Data Migrator running.
