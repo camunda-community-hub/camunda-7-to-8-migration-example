@@ -238,7 +238,7 @@ public class SampleJavaDelegate {
 
 As you can see, the job type is set to the former delegate bean name (`sampleJavaDelegate`). This is inline to what the diagram converter did in the BPMN service task:
 
-![Converted Process Model Service Task](converted-process-1)
+![Converted Process Model Service Task](converted-process-1.png)
 
 The client code to start sample processes was also adjusted according to our patterns:
 
