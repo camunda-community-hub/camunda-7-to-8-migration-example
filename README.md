@@ -326,7 +326,7 @@ A possible easy approach is to use Generative AI to refactor the test case.
 
 The following prompt:
 
-```prompt
+```
 Please adjust this test case which still uses Camunda 7 assertions to use Camunda Process Test of Camunda 8. You can find some context in https://github.com/camunda-community-hub/camunda-7-to-8-code-conversion/blob/main/patterns/ALL_IN_ONE.md or the official documentation (mostly https://docs.camunda.io/docs/next/apis-tools/testing/assertions/ and https://docs.camunda.io/docs/next/apis-tools/testing/utilities/):
 
 package org.camunda.community.migration.example;
@@ -346,6 +346,9 @@ public class ApplicationTest {
 
   @Test
   void testHappyPathWithUserTask() {
+    // An execution listener was added for the Data Migrator - mock it in our test case. This might be removed once you migrated!
+    processTestContext.mockJobWorker("migrator").thenComplete(); 
+
     HashMap<String, Object> variables = new HashMap<String, Object>();
     variables.put("x", 7);
 
@@ -378,6 +381,9 @@ public class ApplicationTest {
 
   @Test
   void testTimerPath() {
+    // An execution listener was added for the Data Migrator - mock it in our test case. This might be removed once you migrated!
+    processTestContext.mockJobWorker("migrator").thenComplete(); 
+
     HashMap<String, Object> variables = new HashMap<String, Object>();
     variables.put("x", 5);
 
@@ -410,6 +416,13 @@ One important prerequisite for the data migrator is, that you need an execution 
 This can be automatically added by the diagram converter:
 
 ![Configuring diagram conversion](migration-analyzer-3.png)
+
+Note that this is why we added a mock for it in the test cases:
+
+```java
+    // An execution listener was added for the Data Migrator - mock it in our test case. This might be removed once you migrated!
+    processTestContext.mockJobWorker("migrator").thenComplete(); 
+```
 
 The Data Migrator will read from the Camunda 7 database, and talk to the Camunda 8 API. So you have to configure those endpoints in the `config/application.yaml` and of course make sure Camunda 8 is up before running the data migrator. Point the H2 URL to the right database file - or copy it over. Of course you can also configure other database as H2.
 

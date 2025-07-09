@@ -30,6 +30,9 @@ public class ApplicationTest {
 
   @Test
   void testHappyPathWithUserTask() {
+    // An execution listener was added for the Data Migrator - mock it in our test case. This might be removed once you migrated!
+    processTestContext.mockJobWorker("migrator").thenComplete(); 
+    
     HashMap<String, Object> variables = new HashMap<String, Object>();
     variables.put("x", 7);
 
@@ -62,6 +65,9 @@ public class ApplicationTest {
 
   @Test
   void testTimerPath() {
+    // An execution listener was added for the Data Migrator - mock it in our test case. This might be removed once you migrated!
+    processTestContext.mockJobWorker("migrator").thenComplete();     
+    
     HashMap<String, Object> variables = new HashMap<String, Object>();
     variables.put("x", 5);
 
