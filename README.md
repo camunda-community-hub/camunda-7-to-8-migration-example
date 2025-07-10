@@ -316,6 +316,15 @@ You need to add a line of code to your Spring Boot app to auto-deploy process mo
 public class Application {
 ```
 
+Because we added an execution listener for the Data Migrator during the diagram conversion (see below), you need to add a `noop` job worker to make processes progress out of the start event when they are created in Camunda 8 from scratch:
+
+```java
+  @JobWorker(name = "noop")
+  public void noop() {
+  }
+```
+
+
 When Camunda Run is up propely, you can simply run your Spring application:
 
 ```
@@ -375,7 +384,7 @@ public class ApplicationTest {
   @Test
   void testHappyPathWithUserTask() {
     // An execution listener was added for the Data Migrator - mock it in our test case. This might be removed once you migrated!
-    processTestContext.mockJobWorker("migrator").thenComplete(); 
+    processTestContext.mockJobWorker("noop").thenComplete(); 
 
     HashMap<String, Object> variables = new HashMap<String, Object>();
     variables.put("x", 7);
@@ -410,7 +419,7 @@ public class ApplicationTest {
   @Test
   void testTimerPath() {
     // An execution listener was added for the Data Migrator - mock it in our test case. This might be removed once you migrated!
-    processTestContext.mockJobWorker("migrator").thenComplete(); 
+    processTestContext.mockJobWorker("noop").thenComplete(); 
 
     HashMap<String, Object> variables = new HashMap<String, Object>();
     variables.put("x", 5);
@@ -437,7 +446,7 @@ With the migration of the solution being successful, let's look at migrating the
 
 We are using the [Camunda 7 to 8 Data Migrator](https://github.com/camunda/c7-data-migrator/) for this. Please make sure to check the [Migration Limitations](https://github.com/camunda/c7-data-migrator/tree/main?tab=readme-ov-file#migration-limitations) on what it can do and what it cannot do. For our example, it can migrate all running instances to Camunda 8.
 
-One important prerequisite for the data migrator is, that you need an execution listener with job type `migrator` on the blank start event of your process:
+One important prerequisite for the data migrator is, that you need an execution listener with job type `if legacyId then "migrator" else "noop"` on the blank start event of your process:
 
 ![Execution Listener on Start Event for Runtime Data Migrator](converted-process-3.png)
 
@@ -449,7 +458,7 @@ Note that this is why we added a mock for it in the test cases:
 
 ```java
     // An execution listener was added for the Data Migrator - mock it in our test case. This might be removed once you migrated!
-    processTestContext.mockJobWorker("migrator").thenComplete(); 
+    processTestContext.mockJobWorker("noop").thenComplete(); 
 ```
 
 The Data Migrator will read from the Camunda 7 database, and talk to the Camunda 8 API. So you have to configure those endpoints in the `config/application.yaml` and of course make sure Camunda 8 is up before running the data migrator. Point the H2 URL to the right database file - or copy it over. Of course you can also configure other database as H2.
@@ -462,6 +471,8 @@ camunda:
     grpc-address: http://localhost:26500
     rest-address: http://localhost:8080
   migrator:
+    job-type: migrator    
+    validation-job-type: '=if legacyId then "migrator" else "noop"'
     c7:
       data-source:
         jdbc-url: jdbc:h2:./h2/camunda-h2-database;TRACE_LEVEL_FILE=0;DB_CLOSE_ON_EXIT=FALSE
@@ -480,9 +491,9 @@ You should see some logs, but no errors. Afterwards you can find all instances y
 
 Note that in a real migration scenario, you typically run the following order:
 
-1. Deploy the process model for migration (including the execution listener `migrator`)
+1. Deploy the process model for migration (including the execution listener for `migrator`)
 2. Run the Data Migrator
-3. Deploy a process model for production (removing the execution listener `migrator`)
+3. Deploy a process model for production (removing the execution listener for `migrator`)
 4. Send production traffic to the system
 
 In the above tutorial, your processes started with application might hang in the start event, if they have the execution listener `migrator` without the Data Migrator running.
