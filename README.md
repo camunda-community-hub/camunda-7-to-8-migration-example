@@ -295,6 +295,10 @@ Invoking the Spring Bean via JUEL (`#{sampleBean.someMethod(y)}`) requires some 
 
 A sample [JuelExpressionEvaluatorWorker](process-solution-camunda-8/src/main/java/org/camunda/community/migration/example/el/JuelExpressionEvaluatorWorker.java) is contained in this repository. As you can see, this is relatively straightforward, but the complexity depends on what kind of expressions you need to evaluate.
 
+Make sure to set the job type of the service accordingly (`JuelExpressionEvaluatorWorker` in our example).
+
+
+
 ### Adjusting the Code
 
 You need to add a line of code to your Spring Boot app to auto-deploy process models during startup, a functionality that was automatically enabled in Camunda 7, but provides more manual control in Camunda 8:
