@@ -1,12 +1,21 @@
 # Camunda 7 to 8 Migration Example
 
-This project contains a simple end-to-end migration example to get a Camunda 7 solution to Camunda 8. It is deliberatily simple enough to show migration end-to-end, but therefore the complexity is limited.
+This project contains a simple end-to-end migration example to get a Camunda 7 solution to Camunda 8. It follows the following steps:
 
-We know, that most real-life projects are more complex to migrate, still we want to use this as a baseline to discuss the approach and showcase migration tooling.
+![Steps](steps.png)
+
+1. Existing Camunda 7 solution
+2. [Diagram Converter](https://github.com/camunda-community-hub/camunda-7-to-8-migration-analyzer): Convert the BPMN model
+3. [Code Conversion with Open Rewrite recipes](https://github.com/camunda-community-hub/camunda-7-to-8-code-conversion/tree/main/recipes)
+4. AI-assisted testcase migration based on [testing patterns](https://github.com/camunda-community-hub/camunda-7-to-8-code-conversion/tree/main/patterns/40-test-assertions/10-assertions) (no Open Rewrite recipes yet)
+5. [Data Migrator - Runtime Model](https://github.com/camunda/c7-data-migrator/)
+6. Done
+
+It is deliberatily simple enough to show migration end-to-end. We know, that most real-life projects are more complex to migrate, still we want to use this as a baseline to discuss the approach and showcase migration tooling.
 
 The [Migration Journey](https://docs.camunda.io/docs/next/guides/migrating-from-camunda-7/migration-journey/) in our migration guide touches on more details.
 
-You can find the fill code for this example in this repo:
+You can find the **full source code** for this example in this repo:
 
 - [Camunda 7 Process Solution](process-solution-camunda-7/)
 - [Migrated Camunda 8 Process Solution](process-solution-camunda-7/)
@@ -23,7 +32,7 @@ The process:
 - Has a User Task with an assignment to the user `demo`
 - Has a timer event with a duration of 5 minutes: `PT5M`
 
-The subprocess is deliberatley simple:
+The subprocess:
 ![The sub process](sub-process.png)
 
 Code-wise it is a simple Spring Boot application:
@@ -122,6 +131,8 @@ And finally we simulate some load in the system by just starting some process in
 
 Let's migrate this solution. We go in multiple steps using various tools on the way.
 
+### Diagram Conversion
+
 1. Convert our BPMN models using the [Migration Analyzer & Diagram Converter](https://github.com/camunda-community-hub/camunda-7-to-8-migration-analyzer):
 
 ![Migration Analyzer & Diagram Converter](migration-analyzer-1.png)
@@ -130,7 +141,10 @@ Let's migrate this solution. We go in multiple steps using various tools on the 
 
 ![Download converted models](migration-analyzer-2.png)
 
-3. Running the [Code Convertion - OpenRewrite Recipes](https://github.com/camunda-community-hub/camunda-7-to-8-code-conversion/tree/main/recipes) to refactor your code base. There are not recipes for any situation, but for this case it can already refactor the Camunda client API usage (RuntimeService etc) and the JavaDelegates. Add the following plugin to your pom.xml:
+
+### Code Conversion
+
+Now run the [Code Convertion - OpenRewrite Recipes](https://github.com/camunda-community-hub/camunda-7-to-8-code-conversion/tree/main/recipes) to refactor your code base. There are not recipes for any situation, but for this case it can already refactor the Camunda client API usage (RuntimeService etc) and the JavaDelegates. Add the following plugin to your pom.xml:
 
 ```xml
 <project>
@@ -214,6 +228,8 @@ This will apply a set of refactorings as you can see in the logs:
 [WARNING] Please review and commit the results.
 ```
 
+### Review code changes
+
 Let's quickly review the changes.
 
 The JavaDelegate was rewritten to a JobWorker. This follows our patterns:
@@ -278,6 +294,19 @@ Invoking the Spring Bean via JUEL (`#{sampleBean.someMethod(y)}`) requires some 
 
 A sample [JuelExpressionEvaluatorWorker](process-solution-camunda-8/src/main/java/org/camunda/community/migration/example/el/JuelExpressionEvaluatorWorker.java) is contained in this repository. As you can see, this is relatively straightforward, but the complexity depends on what kind of expressions you need to evaluate.
 
+### Adjusting the Code
+
+You need to add a line of code to your Spring Boot app to auto-deploy process models during startup, a functionality that was automatically enables in Camunda 7, but provides more manual control in Camunda 8:
+
+```java
+@SpringBootApplication
+@Deployment(resources = "classpath*:/**/*.bpmn")
+public class Application {
+```
+
+
+### Cleanup Maven Dependencies
+
 Next up, you should cleanup your Maven dependencies. You can remove all Camunda 7 dependencies, which might also cause changes around the Spring Boot version you are using. In our example - you might simple reduce dependencies to:
 
 ```xml
@@ -306,17 +335,11 @@ Next up, you should cleanup your Maven dependencies. You can remove all Camunda 
 </dependencies>
 ```
 
-Now we are ready to run our solution against Camunda 8 for the first time, as kind of smoke test. The test cases don't yet compile (see below), but let's ignore this for now. You could easily [Download latest Camunda 8 Run](https://downloads.camunda.cloud/release/camunda/c8run/) to run Camunda 8 Run locally. For the Data Migrator to work (see below) you need at least 8.8-alpha6. 
+### Run your Camunda 8 solution
 
-You need to add a line of code to your Spring Boot app to auto-deploy process models during startup, a functionality that was automatically enables in Camunda 7, but provides more manual control in Camunda 8:
+Now we are ready to run our solution against Camunda 8 for the first time, as kind of smoke test. The test cases don't yet compile (see below), but let's ignore this for now. You could [download the latest Camunda 8 Run](https://downloads.camunda.cloud/release/camunda/c8run/) to run Camunda 8 Run locally. For the Data Migrator to work (see below) **you need at least version 8.8-alpha6**. 
 
-```java
-@SpringBootApplication
-@Deployment(resources = "classpath*:/**/*.bpmn")
-public class Application {
-```
-
-Because we added an execution listener for the Data Migrator during the diagram conversion (see below), you need to add a `noop` job worker to make processes progress out of the start event when they are created in Camunda 8 from scratch:
+Because we added an execution listener for the Data Migrator during the diagram conversion (this is explained in more detail below), you need to add a `noop` job worker to make processes progress out of the start event when they are created in Camunda 8 from scratch:
 
 ```java
   @JobWorker(name = "noop")
@@ -358,10 +381,9 @@ SampleBean.someMethod('hello world')
 
 ## Migrating Test Cases
 
-Finally, we also need to migrate the test case. Note that at the time of writing, there were no recipes yet to refactor JUnit test assertions (but they are planned).
-A possible easy approach is to use Generative AI to refactor the test case. 
+Finally, we also need to migrate the test case. Note that at the time of writing, there were no recipes yet to refactor JUnit test assertions yet.
 
-The following prompt:
+A possible easy approach is to use Generative AI to refactor the test case, for example starting with a prompt like this: 
 
 ```
 Please adjust this test case which still uses Camunda 7 assertions to use Camunda Process Test of Camunda 8. You can find some context in https://github.com/camunda-community-hub/camunda-7-to-8-code-conversion/blob/main/patterns/ALL_IN_ONE.md or the official documentation (mostly https://docs.camunda.io/docs/next/apis-tools/testing/assertions/ and https://docs.camunda.io/docs/next/apis-tools/testing/utilities/):
@@ -370,7 +392,7 @@ package org.camunda.community.migration.example;
 [... add full test case...]
 ```
 
-In current experiments it requires still a couple of loops to iron out some mistakes the AI does - but then you can end up with this test case, which does the same as the Camunda 7 one. Going through that exercise will give you a context in which you would be able to migrate also more than just one test case, but expect a bit of review work.
+In current experiments it requires still a couple of loops to iron out mistakes the AI does - but then you can end up with this test case, which does the same as the Camunda 7 one. Going through that exercise will give you a context in which you would be able to migrate also more than just one test case, but expect a bit of review work.
 
 ```java
 public class ApplicationTest {
