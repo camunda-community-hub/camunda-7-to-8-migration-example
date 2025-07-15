@@ -297,8 +297,6 @@ A sample [JuelExpressionEvaluatorWorker](process-solution-camunda-8/src/main/jav
 
 Make sure to set the job type of the service accordingly (`JuelExpressionEvaluatorWorker` in our example).
 
-
-
 ### Adjusting the Code
 
 You need to add a line of code to your Spring Boot app to auto-deploy process models during startup, a functionality that was automatically enabled in Camunda 7, but provides more manual control in Camunda 8:
@@ -391,10 +389,17 @@ Finally, we also need to migrate the test case. Note that at the time of writing
 A possible easy approach is to use Generative AI to refactor the test case, for example starting with a prompt like this: 
 
 ```
-Please adjust this test case which still uses Camunda 7 assertions to use Camunda Process Test of Camunda 8. You can find some context in https://github.com/camunda-community-hub/camunda-7-to-8-code-conversion/blob/main/patterns/ALL_IN_ONE.md or the official documentation (mostly https://docs.camunda.io/docs/next/apis-tools/testing/assertions/ and https://docs.camunda.io/docs/next/apis-tools/testing/utilities/):
+Please refactor the following Camunda 7 JUnit test case to Camunda 8 using the official migration pattern described in https://github.com/camunda-community-hub/camunda-7-to-8-code-conversion/blob/main/patterns/ALL_IN_ONE.md. The refactored test must:
 
-package org.camunda.community.migration.example;
-[... add full test case...]
+- Use `@SpringBootTest` and `@CamundaSpringProcessTest`
+- Use `CamundaClient` to start the process
+- Use `CamundaProcessTestContext.completeUserTask(...)` to complete user tasks
+- Use `CamundaProcessTestContext.increaseTime(Duration)` to simulate timer events (no manual job execution)
+- Use `CamundaAssert` with `byName(...)` selectors to check activity state
+- Use `assertThat(processInstance).hasVariable(...)` to check process variables
+
+Here is the Camunda 7 test case:
+[... add full test case code...]
 ```
 
 In current experiments it requires still a couple of loops to iron out mistakes the AI makes - but then you can end up with this test case, which does the same as the Camunda 7 one. Going through that exercise will give you a context in which you would be able to migrate also more than just one test case, but expect a bit of review work.
