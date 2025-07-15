@@ -1,6 +1,6 @@
 # Camunda 7 to 8 Migration Example
 
-This project contains a simple end-to-end migration example to get a Camunda 7 solution to Camunda 8. It follows the following steps:
+This project provides a comprehensive end-to-end migration example for migrating a Camunda 7 solution to Camunda 8. The migration follows these steps:
 
 ![Steps](steps.png)
 
@@ -11,14 +11,14 @@ This project contains a simple end-to-end migration example to get a Camunda 7 s
 5. [Data Migrator - Runtime Model](https://github.com/camunda/c7-data-migrator/)
 6. Done
 
-It is deliberatily simple enough to show migration end-to-end. We know, that most real-life projects are more complex to migrate, still we want to use this as a baseline to discuss the approach and showcase migration tooling.
+It is deliberately simple enough to demonstrate the end-to-end migration process. While we acknowledge that most real-world projects are more complex to migrate, we use this as a baseline to discuss the approach and showcase migration tooling.
 
 The [Migration Journey](https://docs.camunda.io/docs/next/guides/migrating-from-camunda-7/migration-journey/) in our migration guide touches on more details.
 
 You can find the **full source code** for this example in this repo:
 
 - [Camunda 7 Process Solution](process-solution-camunda-7/)
-- [Migrated Camunda 8 Process Solution](process-solution-camunda-7/)
+- [Migrated Camunda 8 Process Solution](process-solution-camunda-8/)
 
 ## The Camunda 7 Process Solution
 
@@ -33,6 +33,7 @@ The process:
 - Has a timer event with a duration of 5 minutes: `PT5M`
 
 The subprocess:
+
 ![The sub process](sub-process.png)
 
 Code-wise it is a simple Spring Boot application:
@@ -45,7 +46,7 @@ public class Application {
 }
 ```
 
-Here the delegate and Spring bean:
+Here are the delegate and Spring bean:
 
 ```java
 @Component
@@ -96,7 +97,7 @@ public class ApplicationTest {
                 "sample-process-solution-process", //
                 Variables.createVariables().putValue("x", 5));
     
-    // Query and trigger timmer
+    // Query and trigger timer
     // Execute the pending job (e.g. a timer or async)
     Job timerJob = managementService().createJobQuery()
       .processInstanceId(processInstance.getId())
@@ -129,7 +130,7 @@ And finally we simulate some load in the system by just starting some process in
 
 ## Migrating the Process Solution to Camunda 8
 
-Let's migrate this solution. We go in multiple steps using various tools on the way.
+Let's migrate this solution. We will proceed in multiple steps using various tools along the way.
 
 ### Diagram Conversion
 
@@ -144,7 +145,7 @@ Let's migrate this solution. We go in multiple steps using various tools on the 
 
 ### Code Conversion
 
-Now run the [Code Convertion - OpenRewrite Recipes](https://github.com/camunda-community-hub/camunda-7-to-8-code-conversion/tree/main/recipes) to refactor your code base. There are not recipes for any situation, but for this case it can already refactor the Camunda client API usage (RuntimeService etc) and the JavaDelegates. Add the following plugin to your pom.xml:
+Now run the [Code Conversion - OpenRewrite Recipes](https://github.com/camunda-community-hub/camunda-7-to-8-code-conversion/tree/main/recipes) to refactor your codebase. There are no recipes for every situation, but for this case it can already refactor the Camunda client API usage (RuntimeService etc.) and the JavaDelegates. Add the following plugin to your pom.xml:
 
 ```xml
 <project>
@@ -252,7 +253,7 @@ public class SampleJavaDelegate {
 }
 ```
 
-As you can see, the job type is set to the former delegate bean name (`sampleJavaDelegate`). This is inline to what the diagram converter did in the BPMN service task:
+As you can see, the job type is set to the former delegate bean name (`sampleJavaDelegate`). This is consistent with what the diagram converter did in the BPMN service task:
 
 ![Converted Process Model Service Task](converted-process-1.png)
 
@@ -288,7 +289,7 @@ The client code to start sample processes was also adjusted according to our pat
   }
 ```
 
-Invoking the Spring Bean via JUEL (`#{sampleBean.someMethod(y)}`) requires some extra effort to migrate. The diagram converter moves that expression into an header attribute. Then you can build an own worker doing those JUEL evaluation in your application. It needs to run in your application anyway, as it needs to be able to access your Spring context. This one worker should be able to run all JUEL expressions for you.
+Invoking the Spring Bean via JUEL (`#{sampleBean.someMethod(y)}`) requires some extra effort to migrate. The diagram converter moves that expression into a header attribute. Then you can build your own worker doing those JUEL evaluation in your application. It needs to run in your application anyway, as it needs to be able to access your Spring context. This one worker should be able to run all JUEL expressions for you.
 
 ![Converted Process Model Service Task With Expression](converted-process-2.png)
 
@@ -296,7 +297,7 @@ A sample [JuelExpressionEvaluatorWorker](process-solution-camunda-8/src/main/jav
 
 ### Adjusting the Code
 
-You need to add a line of code to your Spring Boot app to auto-deploy process models during startup, a functionality that was automatically enables in Camunda 7, but provides more manual control in Camunda 8:
+You need to add a line of code to your Spring Boot app to auto-deploy process models during startup, a functionality that was automatically enabled in Camunda 7, but provides more manual control in Camunda 8:
 
 ```java
 @SpringBootApplication
@@ -307,7 +308,7 @@ public class Application {
 
 ### Cleanup Maven Dependencies
 
-Next up, you should cleanup your Maven dependencies. You can remove all Camunda 7 dependencies, which might also cause changes around the Spring Boot version you are using. In our example - you might simple reduce dependencies to:
+Next up, you should cleanup your Maven dependencies. You can remove all Camunda 7 dependencies, which might also cause changes around the Spring Boot version you are using. In our example - you might simply reduce dependencies to:
 
 ```xml
 <properties>
@@ -348,7 +349,7 @@ Because we added an execution listener for the Data Migrator during the diagram 
 ```
 
 
-When Camunda Run is up propely, you can simply run your Spring application:
+When Camunda Run is up properly, you can simply run your Spring application:
 
 ```
 
@@ -392,7 +393,7 @@ package org.camunda.community.migration.example;
 [... add full test case...]
 ```
 
-In current experiments it requires still a couple of loops to iron out mistakes the AI does - but then you can end up with this test case, which does the same as the Camunda 7 one. Going through that exercise will give you a context in which you would be able to migrate also more than just one test case, but expect a bit of review work.
+In current experiments it requires still a couple of loops to iron out mistakes the AI makes - but then you can end up with this test case, which does the same as the Camunda 7 one. Going through that exercise will give you a context in which you would be able to migrate also more than just one test case, but expect a bit of review work.
 
 ```java
 public class ApplicationTest {
@@ -468,7 +469,7 @@ With the migration of the solution being successful, let's look at migrating the
 
 We are using the [Camunda 7 to 8 Data Migrator](https://github.com/camunda/c7-data-migrator/) for this. Please make sure to check the [Migration Limitations](https://github.com/camunda/c7-data-migrator/tree/main?tab=readme-ov-file#migration-limitations) on what it can do and what it cannot do. For our example, it can migrate all running instances to Camunda 8.
 
-One important prerequisite for the data migrator is, that you need an execution listener with job type `if legacyId then "migrator" else "noop"` on the blank start event of your process:
+One important prerequisite for the data migrator is that you need an execution listener with job type `if legacyId then "migrator" else "noop"` on the blank start event of your process:
 
 ![Execution Listener on Start Event for Runtime Data Migrator](converted-process-3.png)
 
@@ -483,7 +484,7 @@ Note that this is why we added a mock for it in the test cases:
     processTestContext.mockJobWorker("noop").thenComplete(); 
 ```
 
-The Data Migrator will read from the Camunda 7 database, and talk to the Camunda 8 API. So you have to configure those endpoints in the `config/application.yaml` and of course make sure Camunda 8 is up before running the data migrator. Point the H2 URL to the right database file - or copy it over. Of course you can also configure other database as H2.
+The Data Migrator will read from the Camunda 7 database, and talk to the Camunda 8 API. So you have to configure those endpoints in the `config/application.yaml` and of course make sure Camunda 8 is up before running the data migrator. Point the H2 URL to the right database file - or copy it over. Of course you can also configure other databases as H2.
 
 ```yaml
 camunda:
