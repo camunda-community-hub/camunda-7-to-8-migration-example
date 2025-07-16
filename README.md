@@ -478,7 +478,7 @@ With the migration of the solution being successful, let's look at migrating the
 
 We are using the [Camunda 7 to 8 Data Migrator](https://github.com/camunda/c7-data-migrator/) for this. Please make sure to check the [Migration Limitations](https://github.com/camunda/c7-data-migrator/tree/main?tab=readme-ov-file#migration-limitations) on what it can do and what it cannot do. For our example, it can migrate all running instances to Camunda 8.
 
-One important prerequisite for the data migrator is that you need an execution listener with job type `if legacyId then "migrator" else "noop"` on the blank start event of your process:
+One important prerequisite for the data migrator is that you need an execution listener with job type `=if legacyId != null then "migrator" else "noop"` on the blank start event of your process:
 
 ![Execution Listener on Start Event for Runtime Data Migrator](converted-process-3.png)
 
@@ -504,7 +504,7 @@ camunda:
     rest-address: http://localhost:8080
   migrator:
     job-type: migrator    
-    validation-job-type: '=if legacyId then "migrator" else "noop"'
+    validation-job-type: '=if legacyId != null then "migrator" else "noop"'
     c7:
       data-source:
         jdbc-url: jdbc:h2:./h2/camunda-h2-database;TRACE_LEVEL_FILE=0;DB_CLOSE_ON_EXIT=FALSE
