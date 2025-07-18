@@ -169,7 +169,7 @@ Now run the [Code Conversion - OpenRewrite Recipes](https://github.com/camunda-c
                     <dependency>
                       <groupId>org.camunda.community</groupId>
                       <artifactId>camunda-7-to-8-rewrite-recipes</artifactId>
-                      <version>0.0.1-alpha1</version>
+                      <version>0.0.1-alpha2</version>
                     </dependency>
                 </dependencies>
             </plugin>
