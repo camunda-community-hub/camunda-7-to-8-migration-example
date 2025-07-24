@@ -17,39 +17,42 @@ import org.springframework.test.context.ActiveProfiles;
 @SpringBootTest
 @ActiveProfiles("test")
 public class ApplicationTest {
-	
+
   @Test
   void pathWithUserTask() {
-    ProcessInstance processInstance = runtimeService().startProcessInstanceByKey(
-            "sample-process-solution-process",
-            Variables.createVariables().putValue("x", 7));
+    ProcessInstance processInstance =
+        runtimeService()
+            .startProcessInstanceByKey(
+                "sample-process-solution-process", Variables.createVariables().putValue("x", 7));
     // assert / verify that we arrive in the user task with the name "Say hello to demo"
     assertThat(processInstance).isWaitingAt(findId("Say hello to demo"));
-    assertThat(task())
-    	.hasName("Say hello to demo")
-    	.isAssignedTo("demo");
-    
+    assertThat(task()).hasName("Say hello to demo").isAssignedTo("demo");
+
     // complete that task, so that the process instance advances
     complete(task());
-    // Assert that it completed in the right end event, and that a Spring Bean hooked into the service task has written the expected process variable
+    // Assert that it completed in the right end event, and that a Spring Bean hooked into the
+    // service task has written the expected process variable
     assertThat(processInstance).isEnded().hasPassed("EndEvent_GreaterThan5");
     assertThat(processInstance).variables().containsEntry("theAnswer", 42);
   }
 
   @Test
   void pathWithTimer() {
-    ProcessInstance processInstance = runtimeService().startProcessInstanceByKey(
+    ProcessInstance processInstance =
+        runtimeService()
+            .startProcessInstanceByKey(
                 "sample-process-solution-process", //
                 Variables.createVariables().putValue("x", 5));
-    
+
     // Query and trigger timmer
     // Execute the pending job (e.g. a timer or async)
-    Job timerJob = managementService().createJobQuery()
-      .processInstanceId(processInstance.getId())
-      .singleResult();
+    Job timerJob =
+        managementService()
+            .createJobQuery()
+            .processInstanceId(processInstance.getId())
+            .singleResult();
     managementService().executeJob(timerJob.getId());
 
-    
     assertThat(processInstance).isEnded().hasPassed("EndEvent_SmallerThan5");
   }
 }

@@ -1,7 +1,7 @@
 package org.camunda.community.migration.example;
 
+import jakarta.annotation.PostConstruct;
 import java.util.Random;
-
 import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
 import org.camunda.bpm.engine.variable.VariableMap;
@@ -10,14 +10,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-import jakarta.annotation.PostConstruct;
-
 @Component
 @Profile("!test")
 public class SampleProcessStarter {
 
-  @Autowired
-  private RuntimeService runtimeService;
+  @Autowired private RuntimeService runtimeService;
 
   @PostConstruct
   public void startSomeProcesses() {
@@ -30,8 +27,8 @@ public class SampleProcessStarter {
       VariableMap variables = Variables.createVariables();
       variables.putValue("x", rand);
 
-      ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("sample-process-solution-process",
-          variables);
+      ProcessInstance processInstance =
+          runtimeService.startProcessInstanceByKey("sample-process-solution-process", variables);
       System.out.println("Started " + processInstance.getId());
     }
   }

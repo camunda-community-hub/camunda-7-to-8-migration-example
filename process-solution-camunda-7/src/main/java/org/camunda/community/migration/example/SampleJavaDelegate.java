@@ -9,7 +9,7 @@ public class SampleJavaDelegate implements JavaDelegate {
 
   public void execute(DelegateExecution execution) throws Exception {
     Object x = execution.getVariable("x");
-	System.out.println("SampleJavaDelegate " + x);
+    System.out.println("SampleJavaDelegate " + x);
     execution.setVariable("y", "hello world");
   }
 }
