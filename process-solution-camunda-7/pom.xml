@@ -1,5 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.camunda.community.migration</groupId>
   <artifactId>process-solution-camunda-7</artifactId>
@@ -11,13 +11,10 @@
     <version.java>17</version.java>
     <maven.compiler.source>${version.java}</maven.compiler.source>
     <maven.compiler.target>${version.java}</maven.compiler.target>
-
     <version.spring-boot>3.3.6</version.spring-boot>
     <version.camunda>7.23.0</version.camunda>
-
     <plugin.version.maven-surefire-plugin>3.5.2</plugin.version.maven-surefire-plugin>
   </properties>
-
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -31,12 +28,11 @@
         <groupId>org.camunda.bpm</groupId>
         <artifactId>camunda-bom</artifactId>
         <version>${version.camunda}</version>
-        <scope>import</scope>
         <type>pom</type>
+        <scope>import</scope>
       </dependency>
     </dependencies>
   </dependencyManagement>
-
   <dependencies>
     <dependency>
       <groupId>org.camunda.bpm.springboot</groupId>
@@ -60,8 +56,48 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
-
   <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>com.diffplug.spotless</groupId>
+          <artifactId>spotless-maven-plugin</artifactId>
+          <version>2.46.0</version>
+          <configuration>
+            <formats>
+              <format>
+                <includes>
+                  <include>*.md</include>
+                  <include>.gitignore</include>
+                </includes>
+                <trimTrailingWhitespace />
+                <endWithNewline />
+                <indent>
+                  <spaces>true</spaces>
+                  <spacesPerTab>2</spacesPerTab>
+                </indent>
+              </format>
+            </formats>
+            <java>
+              <googleJavaFormat />
+            </java>
+            <pom>
+              <sortPom>
+                <nrOfIndentSpace>2</nrOfIndentSpace>
+                <expandEmptyElements>false</expandEmptyElements>
+                <spaceBeforeCloseEmptyElement>true</spaceBeforeCloseEmptyElement>
+                <keepBlankLines>false</keepBlankLines>
+              </sortPom>
+            </pom>
+            <markdown>
+              <includes>
+                <include>**/*.md</include>
+              </includes>
+            </markdown>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
     <plugins>
       <plugin>
         <groupId>org.springframework.boot</groupId>
@@ -76,28 +112,72 @@
           <redirectTestOutputToFile>true</redirectTestOutputToFile>
         </configuration>
       </plugin>
-
-	  <plugin>
-            <groupId>org.openrewrite.maven</groupId>
-            <artifactId>rewrite-maven-plugin</artifactId>
-            <version>6.0.5</version>
-            <configuration>
-                <activeRecipes>
-                    <recipe>org.camunda.migration.rewrite.recipes.AllClientRecipes</recipe>
-                    <recipe>org.camunda.migration.rewrite.recipes.AllDelegateRecipes</recipe>
-                </activeRecipes>
-                <skipMavenParsing>false</skipMavenParsing>
-            </configuration>
-            <dependencies>
-                <dependency>
-                  <groupId>org.camunda.community</groupId>
-                  <artifactId>camunda-7-to-8-rewrite-recipes</artifactId>
-                  <version>0.0.1-alpha2-SNAPSHOT</version>
-                </dependency>
-            </dependencies>
-        </plugin>
-
+      <plugin>
+        <groupId>org.openrewrite.maven</groupId>
+        <artifactId>rewrite-maven-plugin</artifactId>
+        <version>6.0.5</version>
+        <configuration>
+          <activeRecipes>
+            <recipe>org.camunda.migration.rewrite.recipes.AllClientRecipes</recipe>
+            <recipe>org.camunda.migration.rewrite.recipes.AllDelegateRecipes</recipe>
+          </activeRecipes>
+          <skipMavenParsing>false</skipMavenParsing>
+        </configuration>
+        <dependencies>
+          <dependency>
+            <groupId>org.camunda.community</groupId>
+            <artifactId>camunda-7-to-8-rewrite-recipes</artifactId>
+            <version>0.0.1-alpha2-SNAPSHOT</version>
+          </dependency>
+        </dependencies>
+      </plugin>
     </plugins>
   </build>
-
+  <profiles>
+    <!-- profile to auto format -->
+    <profile>
+      <id>autoFormat</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>com.diffplug.spotless</groupId>
+            <artifactId>spotless-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>spotless-format</id>
+                <goals>
+                  <goal>apply</goal>
+                </goals>
+                <phase>process-sources</phase>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <!-- profile to perform strict validation checks -->
+    <profile>
+      <id>checkFormat</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>com.diffplug.spotless</groupId>
+            <artifactId>spotless-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>spotless-check</id>
+                <goals>
+                  <goal>check</goal>
+                </goals>
+                <phase>validate</phase>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

@@ -2,7 +2,6 @@ package org.camunda.community.migration.example;
 
 import io.camunda.spring.client.jobhandling.result.DefaultResultProcessor;
 import io.camunda.spring.client.jobhandling.result.ResultProcessorContext;
-
 import java.util.Map;
 
 public class ResultVariableResultProcessor extends DefaultResultProcessor {
