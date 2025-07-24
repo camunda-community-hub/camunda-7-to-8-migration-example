@@ -295,14 +295,6 @@ The client code to start sample processes was also adjusted according to our pat
   }
 ```
 
-Invoking the Spring Bean via JUEL (`#{sampleBean.someMethod(y)}`) requires some extra effort to migrate. The diagram converter moves that expression into a header attribute. Then you can build your own worker doing those JUEL evaluation in your application. It needs to run in your application anyway, as it needs to be able to access your Spring context. This one worker should be able to run all JUEL expressions for you.
-
-![Converted Process Model Service Task With Expression](converted-process-2.png)
-
-A sample [JuelExpressionEvaluatorWorker](process-solution-camunda-8/src/main/java/org/camunda/community/migration/example/el/JuelExpressionEvaluatorWorker.java) is contained in this repository. As you can see, this is relatively straightforward, but the complexity depends on what kind of expressions you need to evaluate.
-
-Make sure to set the job type of the service accordingly (`JuelExpressionEvaluatorWorker` in our example).
-
 ### Adjusting the Code
 
 You need to add a line of code to your Spring Boot app to auto-deploy process models during startup, a functionality that was automatically enabled in Camunda 7, but provides more manual control in Camunda 8:
@@ -313,6 +305,23 @@ You need to add a line of code to your Spring Boot app to auto-deploy process mo
 public class Application {
 ```
 
+Invoking the Spring Bean via JUEL (`#{sampleBean.someMethod(y)}`) requires some extra effort to migrate. The diagram converter moves that expression into a header attribute and generates a job type. Then you can annotate the called method as `@JobWorker` and declare the injected `@Variable`. Remember to add the name to the variable in the annotation as the expression references a variable called `y`.
+
+![Converted Process Model Service Task With Expression](converted-process-2.png)
+
+The modified bean will not change function-wise, but only be annotated so that a job worker can be generated from it:
+
+```java
+@JobWorker(type = "sampleBeanSomeMethod")
+public int someMethod(@Variable("y") String text) {
+  System.out.println("SampleBean.someMethod('" + text + "')");
+  return 42;
+}
+```
+
+The original bean invocation did also declare a `resultVariable`. As this construct is not known to Camunda 8, we need to customize the Spring SDK to become sensitive to this.
+
+The [`CamundaSdkCustomConfiguration`](./process-solution-camunda-8/src/main/java/org/camunda/community/migration/example/CamundaSdkCustomConfiguration.java) declares a bean `resultProcessor` that will override the default bean provided by the SDK and allow for customizing the way a result processor is created for a job worker. As we cannot see at bootstrapping time that the bean will require a `resultVariable` to redirect the result to a result variable, we extended the default result processor to become sensitive to the header `resultVariable` at runtime and only behave in a custom way once the header is present in the job.
 
 ### Cleanup Maven Dependencies
 
@@ -334,12 +343,6 @@ Next up, you should cleanup your Maven dependencies. You can remove all Camunda 
     <artifactId>camunda-process-test-spring</artifactId>
     <version>${version.camunda}</version>
     <scope>test</scope>
-  </dependency> 
-  <!-- Used for JUEL evaluation if required -->
-  <dependency>
-    <groupId>org.glassfish</groupId>
-    <artifactId>jakarta.el</artifactId>
-    <version>3.0.4</version>
   </dependency>
 </dependencies>
 ```
