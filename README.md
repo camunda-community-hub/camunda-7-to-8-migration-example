@@ -23,7 +23,7 @@ You can find the **full source code** for this example in this repo:
 You will need at least these versions of the tools:
 
 - [Migration Analyzer & Diagram Converter](https://github.com/camunda-community-hub/camunda-7-to-8-migration-analyzer) >= 0.13.1
-- [Code Conversion Open Rewrite recipes](https://github.com/camunda-community-hub/camunda-7-to-8-code-conversion/) >= 0.0.1-alpha2
+- [Code Conversion Open Rewrite recipes](https://github.com/camunda-community-hub/camunda-7-to-8-code-conversion/) >= 0.0.1
 - [C7 Data Migrator](https://github.com/camunda/c7-data-migrator/) >= 0.1.0-alpha4
 
 ## The Camunda 7 Process Solution
