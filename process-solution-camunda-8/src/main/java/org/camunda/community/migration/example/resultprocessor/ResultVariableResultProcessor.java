@@ -1,4 +1,4 @@
-package org.camunda.community.migration.example;
+package org.camunda.community.migration.example.resultprocessor;
 
 import io.camunda.spring.client.jobhandling.result.DefaultResultProcessor;
 import io.camunda.spring.client.jobhandling.result.ResultProcessorContext;
