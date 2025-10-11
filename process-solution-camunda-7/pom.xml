@@ -115,7 +115,7 @@
       <plugin>
         <groupId>org.openrewrite.maven</groupId>
         <artifactId>rewrite-maven-plugin</artifactId>
-        <version>6.21.0</version>
+        <version>6.21.1</version>
         <configuration>
           <activeRecipes>
             <recipe>org.camunda.migration.rewrite.recipes.AllClientRecipes</recipe>
