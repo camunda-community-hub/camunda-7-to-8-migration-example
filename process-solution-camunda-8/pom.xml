@@ -6,7 +6,7 @@
   <version>1.0.0-SNAPSHOT</version>
   <properties>
     <encoding>UTF-8</encoding>
-    <version.java>21</version.java>
+    <version.java>17</version.java>
     <version.camunda>8.8.11</version.camunda>
     <project.build.sourceEncoding>${encoding}</project.build.sourceEncoding>
     <project.build.resourceEncoding>${encoding}</project.build.resourceEncoding>
