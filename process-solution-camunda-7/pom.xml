@@ -118,16 +118,17 @@
         <version>6.33.0</version>
         <configuration>
           <activeRecipes>
-            <recipe>org.camunda.migration.rewrite.recipes.AllClientRecipes</recipe>
-            <recipe>org.camunda.migration.rewrite.recipes.AllDelegateRecipes</recipe>
+            <recipe>io.camunda.migration.code.recipes.AllClientRecipes</recipe>
+            <recipe>io.camunda.migration.code.recipes.AllDelegateRecipes</recipe>
+            <recipe>io.camunda.migration.code.recipes.AllExternalWorkerRecipes</recipe>
           </activeRecipes>
           <skipMavenParsing>false</skipMavenParsing>
         </configuration>
         <dependencies>
           <dependency>
-            <groupId>org.camunda.community</groupId>
-            <artifactId>camunda-7-to-8-rewrite-recipes</artifactId>
-            <version>0.0.1-alpha2-SNAPSHOT</version>
+            <groupId>io.camunda</groupId>
+            <artifactId>camunda-7-to-8-code-conversion-recipes</artifactId>
+            <version>0.2.1</version>
           </dependency>
         </dependencies>
       </plugin>
