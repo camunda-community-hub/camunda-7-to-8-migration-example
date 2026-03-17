@@ -251,7 +251,7 @@ public class SampleJavaDelegate {
   @JobWorker(type = "sampleJavaDelegate", autoComplete = true)
   public Map<String, Object> executeJobMigrated(ActivatedJob job) throws Exception {
     Map<String, Object> resultMap = new HashMap<>();
-    Object x = job.getVariablesAsMap().get("x");
+    Object x = job.getVariable("x");
     System.out.println("SampleJavaDelegate " + x);
     resultMap.put("y", "hello world");
     return resultMap;
@@ -290,10 +290,12 @@ The client code to start sample processes was also adjusted according to our pat
         .variables(variables)
         .send()
         .join();
-      System.out.println("Started " + String.valueOf(processInstance.getProcessInstanceKey()));
+      System.out.println("Started " + processInstance.getId());
     }
   }
 ```
+
+> **Manual fix needed:** The recipe generates `processInstance.getId()` which does not compile — `ProcessInstanceEvent` does not have a `getId()` method. You need to change this to `processInstance.getProcessInstanceKey()`.
 
 ### Adjusting the Code
 
@@ -342,7 +344,7 @@ A sample [JuelExpressionEvaluatorWorker](process-solution-camunda-8/src/main/jav
 
 ### Cleanup Maven Dependencies
 
-Next up, you should cleanup your Maven dependencies. You can remove all Camunda 7 dependencies, which might also cause changes around the Spring Boot version you are using. In our example - you might simply reduce dependencies to:
+Next up, you should cleanup your Maven dependencies. The recipe adds `spring-boot-starter-camunda-sdk` as a dependency — this artifact has been renamed to `camunda-spring-boot-starter`, so make sure to use the updated name. You can also remove all remaining Camunda 7 dependencies, which might also cause changes around the Spring Boot version you are using. In our example - you might simply reduce dependencies to:
 
 ```xml
 <properties>
