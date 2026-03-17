@@ -52,7 +52,7 @@ public class ApplicationTest {
         .hasAssignee("demo");
 
     // Using utility method to complete user task found by name
-    processTestContext.completeUserTask("Say hello to demo");
+    processTestContext.completeUserTask(UserTaskSelectors.byTaskName("Say hello to demo"));
 
     // Assert that it completed in the right end event, and that a Spring Bean hooked into the
     // service task has written the expected process variable

@@ -1,12 +1,14 @@
 package org.camunda.community.migration.example.resultprocessor;
 
-import io.camunda.spring.client.bean.MethodInfo;
-import io.camunda.spring.client.jobhandling.result.DefaultResultProcessorStrategy;
-import io.camunda.spring.client.jobhandling.result.ResultProcessor;
+import io.camunda.client.bean.MethodInfo;
+import io.camunda.client.jobhandling.result.ResultProcessor;
+import io.camunda.client.jobhandling.result.ResultProcessorStrategy;
 
-public class ResultVariableResultProcessorStrategy extends DefaultResultProcessorStrategy {
+public class ResultVariableResultProcessorStrategy implements ResultProcessorStrategy {
+
   @Override
   public ResultProcessor createProcessor(MethodInfo methodInfo) {
-    return new ResultVariableResultProcessor();
+    ResultProcessor defaultProcessor = ResultProcessorStrategy.super.createProcessor(methodInfo);
+    return new ResultVariableResultProcessor(defaultProcessor);
   }
 }

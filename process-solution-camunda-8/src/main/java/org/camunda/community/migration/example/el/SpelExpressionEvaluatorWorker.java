@@ -1,7 +1,7 @@
 package org.camunda.community.migration.example.el;
 
+import io.camunda.client.annotation.JobWorker;
 import io.camunda.client.api.response.ActivatedJob;
-import io.camunda.spring.client.annotation.JobWorker;
 import java.util.HashMap;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
