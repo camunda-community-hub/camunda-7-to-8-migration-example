@@ -1,7 +1,7 @@
 package org.camunda.community.migration.example;
 
-import io.camunda.spring.client.annotation.Deployment;
-import io.camunda.spring.client.annotation.JobWorker;
+import io.camunda.client.annotation.Deployment;
+import io.camunda.client.annotation.JobWorker;
 import org.springframework.beans.BeansException;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

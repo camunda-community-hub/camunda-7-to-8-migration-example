@@ -5,10 +5,10 @@ This project provides a comprehensive end-to-end migration example for migrating
 ![Steps](steps.png)
 
 1. Existing Camunda 7 solution
-2. [Diagram Converter](https://github.com/camunda-community-hub/camunda-7-to-8-migration-analyzer): Convert the BPMN model
-3. [Code Conversion with Open Rewrite recipes](https://github.com/camunda-community-hub/camunda-7-to-8-code-conversion/tree/main/recipes)
-4. AI-assisted testcase migration based on [testing patterns](https://github.com/camunda-community-hub/camunda-7-to-8-code-conversion/tree/main/patterns/40-test-assertions/10-assertions) (no Open Rewrite recipes yet)
-5. [Data Migrator - Runtime Model](https://github.com/camunda/c7-data-migrator/)
+2. [Diagram Converter](https://github.com/camunda/camunda-7-to-8-migration-tooling/tree/main/diagram-converter): Convert the BPMN model
+3. [Code Conversion with Open Rewrite recipes](https://github.com/camunda/camunda-7-to-8-migration-tooling/tree/main/code-conversion/recipes)
+4. AI-assisted testcase migration based on [testing patterns](https://github.com/camunda/camunda-7-to-8-migration-tooling/tree/main/code-conversion/patterns/40-test-assertions/10-assertions) (no Open Rewrite recipes yet)
+5. [Data Migrator - Runtime Model](https://github.com/camunda/camunda-7-to-8-migration-tooling/tree/main/data-migrator)
 6. Done
 
 It is deliberately simple enough to demonstrate the end-to-end migration process. While we acknowledge that most real-world projects are more complex to migrate, we use this as a baseline to discuss the approach and showcase migration tooling.
@@ -22,9 +22,9 @@ You can find the **full source code** for this example in this repo:
 
 You will need at least these versions of the tools:
 
-- [Migration Analyzer & Diagram Converter](https://github.com/camunda-community-hub/camunda-7-to-8-migration-analyzer) >= 0.13.1
-- [Code Conversion Open Rewrite recipes](https://github.com/camunda-community-hub/camunda-7-to-8-code-conversion/) >= 0.0.1
-- [C7 Data Migrator](https://github.com/camunda/c7-data-migrator/) >= 0.1.0-alpha4
+- [Migration Analyzer & Diagram Converter](https://github.com/camunda/camunda-7-to-8-migration-tooling/tree/main/diagram-converter) >= 0.2.1
+- [Code Conversion OpenRewrite recipes](https://github.com/camunda/camunda-7-to-8-migration-tooling/tree/main/code-conversion/recipes) >= 0.2.1
+- [C7 Data Migrator](https://github.com/camunda/camunda-7-to-8-migration-tooling/tree/main/data-migrator) >= 0.2.1
 
 ## The Camunda 7 Process Solution
 
@@ -140,7 +140,7 @@ Let's migrate this solution. We will proceed in multiple steps using various too
 
 ### Diagram Conversion
 
-1. Convert our BPMN models using the [Migration Analyzer & Diagram Converter](https://github.com/camunda-community-hub/camunda-7-to-8-migration-analyzer):
+1. Convert our BPMN models using the [Migration Analyzer & Diagram Converter](https://github.com/camunda/camunda-7-to-8-migration-tooling/tree/main/diagram-converter):
 
 ![Migration Analyzer & Diagram Converter](migration-analyzer-1.png)
 
@@ -151,7 +151,7 @@ Let's migrate this solution. We will proceed in multiple steps using various too
 
 ### Code Conversion
 
-Now run the [Code Conversion - OpenRewrite Recipes](https://github.com/camunda-community-hub/camunda-7-to-8-code-conversion/tree/main/recipes) to refactor your codebase. There are no recipes for every situation, but for this case it can already refactor the Camunda client API usage (RuntimeService etc.) and the JavaDelegates. Add the following plugin to your pom.xml:
+Now run the [Code Conversion - OpenRewrite Recipes](https://github.com/camunda/camunda-7-to-8-migration-tooling/tree/main/code-conversion/recipes) to refactor your codebase. There are no recipes for every situation, but for this case it can already refactor the Camunda client API usage (RuntimeService etc.) and the JavaDelegates. Add the following plugin to your pom.xml:
 
 ```xml
 <project>
@@ -163,19 +163,20 @@ Now run the [Code Conversion - OpenRewrite Recipes](https://github.com/camunda-c
             <plugin>
                 <groupId>org.openrewrite.maven</groupId>
                 <artifactId>rewrite-maven-plugin</artifactId>
-                <version>6.0.5</version>
+                <version>6.33.0</version>
                 <configuration>
                     <activeRecipes>
-                        <recipe>org.camunda.migration.rewrite.recipes.AllClientRecipes</recipe>
-                        <recipe>org.camunda.migration.rewrite.recipes.AllDelegateRecipes</recipe>
+                        <recipe>io.camunda.migration.code.recipes.AllClientRecipes</recipe>
+                        <recipe>io.camunda.migration.code.recipes.AllDelegateRecipes</recipe>
+                        <recipe>io.camunda.migration.code.recipes.AllExternalWorkerRecipes</recipe>
                     </activeRecipes>
                     <skipMavenParsing>false</skipMavenParsing>
                 </configuration>
                 <dependencies>
                     <dependency>
-                      <groupId>org.camunda.community</groupId>
-                      <artifactId>camunda-7-to-8-rewrite-recipes</artifactId>
-                      <version>0.0.2</version>
+                      <groupId>io.camunda</groupId>
+                      <artifactId>camunda-7-to-8-code-conversion-recipes</artifactId>
+                      <version>0.2.1</version>
                     </dependency>
                 </dependencies>
             </plugin>
@@ -193,44 +194,43 @@ mvn rewrite:run
 This will apply a set of refactorings as you can see in the logs:
 
 ```log
-[INFO] Using active recipe(s) [org.camunda.migration.rewrite.recipes.AllClientRecipes, org.camunda.migration.rewrite.recipes.AllDelegateRecipes]
+[INFO] Using active recipe(s) [io.camunda.migration.code.recipes.AllClientRecipes, io.camunda.migration.code.recipes.AllDelegateRecipes, io.camunda.migration.code.recipes.AllExternalWorkerRecipes]
 [INFO] Using active styles(s) []
 [INFO] Validating active recipes...
 [INFO] Project [process-solution-camunda-7] Resolving Poms...
 [INFO] Project [process-solution-camunda-7] Parsing source files
 [INFO] Running recipe(s)...
-[WARNING] Changes have been made to process-solution-camunda-7\pom.xml by:
-[WARNING]     org.camunda.migration.rewrite.recipes.AllClientRecipes
-[WARNING]         org.camunda.migration.rewrite.recipes.AllClientPrepareRecipes
-[WARNING]             org.openrewrite.java.dependencies.AddDependency: {groupId=io.camunda, artifactId=spring-boot-starter-camunda-sdk, version=8.8.0-alpha4.1}
-[WARNING] Changes have been made to process-solution-camunda-7\src\main\java\org\camunda\community\migration\example\SampleJavaDelegate.java by:
-[WARNING]     org.camunda.migration.rewrite.recipes.AllDelegateRecipes
-[WARNING]         org.camunda.migration.rewrite.recipes.AllDelegatePrepareRecipes
-[WARNING]             org.camunda.migration.rewrite.recipes.delegate.prepare.InjectJobWorkerRecipe
-[WARNING]         org.camunda.migration.rewrite.recipes.AllDelegateMigrateRecipes
-[WARNING]             org.camunda.migration.rewrite.recipes.delegate.migrate.ReplaceExecutionRecipe
-[WARNING]                 org.camunda.migration.rewrite.recipes.delegate.migrate.ReplaceExecutionRecipe$CopyDelegateToJobWorkerRecipe
-[WARNING]                 org.camunda.migration.rewrite.recipes.delegate.migrate.ReplaceExecutionRecipe$MigrateDelegateVariableHandlingInJobWorker
-[WARNING]         org.camunda.migration.rewrite.recipes.AllDelegateCleanupRecipes
-[WARNING]             org.camunda.migration.rewrite.recipes.delegate.cleanup.RemoveDelegateRecipe
-[WARNING] Changes have been made to process-solution-camunda-7\src\main\java\org\camunda\community\migration\example\SampleProcessStarter.java by:
-[WARNING]     org.camunda.migration.rewrite.recipes.AllClientRecipes
-[WARNING]         org.camunda.migration.rewrite.recipes.AllClientPrepareRecipes
-[WARNING]             org.camunda.migration.rewrite.recipes.client.prepare.AddCamundaClientDependencyRecipe
-[WARNING]             org.camunda.migration.rewrite.recipes.sharedRecipes.ReplaceTypedValueAPIRecipe
-[WARNING]         org.camunda.migration.rewrite.recipes.AllClientMigrateRecipes
-[WARNING]             org.camunda.migration.rewrite.recipes.client.migrate.ReplaceStartProcessInstanceMethodsRecipe
-[WARNING]         org.camunda.migration.rewrite.recipes.AllClientCleanupRecipes
-[WARNING]             org.camunda.migration.rewrite.recipes.client.cleanup.RemoveEngineDependencyRecipe
-[WARNING]             org.openrewrite.java.RemoveUnusedImports
-[WARNING] Changes have been made to process-solution-camunda-7\src\test\java\org\camunda\community\migration\example\ApplicationTest.java by:
-[WARNING]     org.camunda.migration.rewrite.recipes.AllClientRecipes
-[WARNING]         org.camunda.migration.rewrite.recipes.AllClientPrepareRecipes
-[WARNING]             org.camunda.migration.rewrite.recipes.client.prepare.AddCamundaClientDependencyRecipe
-[WARNING]             org.camunda.migration.rewrite.recipes.sharedRecipes.ReplaceTypedValueAPIRecipe
-[WARNING]         org.camunda.migration.rewrite.recipes.AllClientMigrateRecipes
-[WARNING]             org.camunda.migration.rewrite.recipes.client.migrate.ReplaceStartProcessInstanceMethodsRecipe
-[WARNING]         org.camunda.migration.rewrite.recipes.AllClientCleanupRecipes
+[WARNING] Changes have been made to process-solution-camunda-7/pom.xml by:
+[WARNING]     io.camunda.migration.code.recipes.AllClientRecipes
+[WARNING]         io.camunda.migration.code.recipes.AllClientPrepareRecipes
+[WARNING]             org.openrewrite.java.dependencies.AddDependency: {groupId=io.camunda, artifactId=spring-boot-starter-camunda-sdk, version=8.8.14}
+[WARNING] Changes have been made to process-solution-camunda-7/src/main/java/org/camunda/community/migration/example/SampleJavaDelegate.java by:
+[WARNING]     io.camunda.migration.code.recipes.AllDelegateRecipes
+[WARNING]         io.camunda.migration.code.recipes.AllDelegatePrepareRecipes
+[WARNING]             io.camunda.migration.code.recipes.delegate.PrepareJobWorkerBeneathDelegateRecipe
+[WARNING]         io.camunda.migration.code.recipes.AllDelegateMigrateRecipes
+[WARNING]             io.camunda.migration.code.recipes.delegate.MigrateExecutionRecipe
+[WARNING]                 io.camunda.migration.code.recipes.delegate.MigrateExecutionRecipe$CopyDelegateToJobWorkerRecipe
+[WARNING]                 io.camunda.migration.code.recipes.delegate.MigrateExecutionRecipe$MigrateDelegateExecutionMethodsInJobWorker
+[WARNING]         io.camunda.migration.code.recipes.AllDelegateCleanupRecipes
+[WARNING]             io.camunda.migration.code.recipes.delegate.CleanupDelegateRecipe
+[WARNING] Changes have been made to process-solution-camunda-7/src/main/java/org/camunda/community/migration/example/SampleProcessStarter.java by:
+[WARNING]     io.camunda.migration.code.recipes.AllClientRecipes
+[WARNING]         io.camunda.migration.code.recipes.AllClientPrepareRecipes
+[WARNING]             io.camunda.migration.code.recipes.client.PrepareCamundaClientDependencyRecipe
+[WARNING]             io.camunda.migration.code.recipes.sharedRecipes.ReplaceTypedValueAPIRecipe
+[WARNING]         io.camunda.migration.code.recipes.AllClientMigrateRecipes
+[WARNING]             io.camunda.migration.code.recipes.client.MigrateStartProcessInstanceMethodsRecipe
+[WARNING]         io.camunda.migration.code.recipes.AllClientCleanupRecipes
+[WARNING]             io.camunda.migration.code.recipes.client.CleanupEngineDependencyRecipe
+[WARNING] Changes have been made to process-solution-camunda-7/src/test/java/org/camunda/community/migration/example/ApplicationTest.java by:
+[WARNING]     io.camunda.migration.code.recipes.AllClientRecipes
+[WARNING]         io.camunda.migration.code.recipes.AllClientPrepareRecipes
+[WARNING]             io.camunda.migration.code.recipes.client.PrepareCamundaClientDependencyRecipe
+[WARNING]             io.camunda.migration.code.recipes.sharedRecipes.ReplaceTypedValueAPIRecipe
+[WARNING]         io.camunda.migration.code.recipes.AllClientMigrateRecipes
+[WARNING]             io.camunda.migration.code.recipes.client.MigrateStartProcessInstanceMethodsRecipe
+[WARNING]         io.camunda.migration.code.recipes.AllClientCleanupRecipes
 [WARNING]             org.openrewrite.java.RemoveUnusedImports
 [WARNING] Please review and commit the results.
 ```
@@ -241,8 +241,8 @@ Let's quickly review the changes.
 
 The JavaDelegate was rewritten to a JobWorker. This follows our patterns:
 
-- [Java Delegate: Class-level Changes](https://github.com/camunda-community-hub/camunda-7-to-8-code-conversion/blob/main/patterns/30-glue-code/10-java-spring-delegate/adjusting-the-java-class.md)
-- [Java Delegate: Handling Process Variables](https://github.com/camunda-community-hub/camunda-7-to-8-code-conversion/blob/main/patterns/30-glue-code/10-java-spring-delegate/handling-process-variables.md)
+- [Java Delegate: Class-level Changes](https://github.com/camunda/camunda-7-to-8-migration-tooling/blob/main/code-conversion/patterns/30-glue-code/10-java-spring-delegate/adjusting-the-java-class.md)
+- [Java Delegate: Handling Process Variables](https://github.com/camunda/camunda-7-to-8-migration-tooling/blob/main/code-conversion/patterns/30-glue-code/10-java-spring-delegate/handling-process-variables.md)
 
 ```java
 @Component
@@ -251,7 +251,7 @@ public class SampleJavaDelegate {
   @JobWorker(type = "sampleJavaDelegate", autoComplete = true)
   public Map<String, Object> executeJobMigrated(ActivatedJob job) throws Exception {
     Map<String, Object> resultMap = new HashMap<>();
-    Object x = job.getVariablesAsMap().get("x");
+    Object x = job.getVariable("x");
     System.out.println("SampleJavaDelegate " + x);
     resultMap.put("y", "hello world");
     return resultMap;
@@ -265,9 +265,9 @@ As you can see, the job type is set to the former delegate bean name (`sampleJav
 
 The client code to start sample processes was also adjusted according to our patterns:
 
-- [Client Code: Class-level Changes](https://github.com/camunda-community-hub/camunda-7-to-8-code-conversion/blob/main/patterns/20-client-code/10-process-engine/adjusting-the-java-class.md)
-- [Client Code: Starting Process Instances](https://github.com/camunda-community-hub/camunda-7-to-8-code-conversion/blob/main/patterns/20-client-code/10-process-engine/starting-process-instances.md)
-- [Client Code: Handle Process Variables](https://github.com/camunda-community-hub/camunda-7-to-8-code-conversion/blob/main/patterns/20-client-code/10-process-engine/handle-process-variables.md)
+- [Client Code: Class-level Changes](https://github.com/camunda/camunda-7-to-8-migration-tooling/blob/main/code-conversion/patterns/20-client-code/10-process-engine/adjusting-the-java-class.md)
+- [Client Code: Starting Process Instances](https://github.com/camunda/camunda-7-to-8-migration-tooling/blob/main/code-conversion/patterns/20-client-code/10-process-engine/starting-process-instances.md)
+- [Client Code: Handle Process Variables](https://github.com/camunda/camunda-7-to-8-migration-tooling/blob/main/code-conversion/patterns/20-client-code/10-process-engine/handle-process-variables.md)
 
 ```java
   @Autowired
@@ -290,10 +290,12 @@ The client code to start sample processes was also adjusted according to our pat
         .variables(variables)
         .send()
         .join();
-      System.out.println("Started " + String.valueOf(processInstance.getProcessInstanceKey()));
+      System.out.println("Started " + processInstance.getId());
     }
   }
 ```
+
+> **Manual fix needed:** The recipe generates `processInstance.getId()` which does not compile — `ProcessInstanceEvent` does not have a `getId()` method. You need to change this to `processInstance.getProcessInstanceKey()`.
 
 ### Adjusting the Code
 
@@ -342,17 +344,17 @@ A sample [JuelExpressionEvaluatorWorker](process-solution-camunda-8/src/main/jav
 
 ### Cleanup Maven Dependencies
 
-Next up, you should cleanup your Maven dependencies. You can remove all Camunda 7 dependencies, which might also cause changes around the Spring Boot version you are using. In our example - you might simply reduce dependencies to:
+Next up, you should cleanup your Maven dependencies. The recipe adds `spring-boot-starter-camunda-sdk` as a dependency — this artifact has been renamed to `camunda-spring-boot-starter`, so make sure to use the updated name. You can also remove all remaining Camunda 7 dependencies, which might also cause changes around the Spring Boot version you are using. In our example - you might simply reduce dependencies to:
 
 ```xml
 <properties>
-  <version.camunda>8.8.0-alpha6-rc3</version.camunda> <!-- used at the time of writing as we need an up-to-date alpha for Camunda Process Test -->
+  <version.camunda>8.8.16</version.camunda>
 </properties>
 
 <dependencies>
   <dependency>
     <groupId>io.camunda</groupId>
-    <artifactId>spring-boot-starter-camunda-sdk</artifactId>
+    <artifactId>camunda-spring-boot-starter</artifactId>
     <version>${version.camunda}</version>
   </dependency>
   <dependency>
@@ -366,7 +368,7 @@ Next up, you should cleanup your Maven dependencies. You can remove all Camunda 
 
 ### Run your Camunda 8 solution
 
-Now we are ready to run our solution against Camunda 8 for the first time, as kind of smoke test. The test cases don't yet compile (see below), but let's ignore this for now. You could [download the latest Camunda 8 Run](https://downloads.camunda.cloud/release/camunda/c8run/) to run Camunda 8 Run locally. For the Data Migrator to work (see below) **you need at least version 8.8-alpha6**. 
+Now we are ready to run our solution against Camunda 8 for the first time, as kind of smoke test. The test cases don't yet compile (see below), but let's ignore this for now. You could [download the latest Camunda 8 Run](https://downloads.camunda.cloud/release/camunda/c8run/) to run Camunda 8 Run locally. For the Data Migrator to work (see below) **you need at least version 8.8**. 
 
 Because we added an execution listener for the Data Migrator during the diagram conversion (this is explained in more detail below), you need to add a `noop` job worker to make processes progress out of the start event when they are created in Camunda 8 from scratch:
 
@@ -415,7 +417,7 @@ Finally, we also need to migrate the test case. Note that at the time of writing
 A possible easy approach is to use Generative AI to refactor the test case, for example starting with a prompt like this: 
 
 ```
-Please refactor the following Camunda 7 JUnit test case to Camunda 8 using the official migration pattern described in https://github.com/camunda-community-hub/camunda-7-to-8-code-conversion/blob/main/patterns/ALL_IN_ONE.md. The refactored test must:
+Please refactor the following Camunda 7 JUnit test case to Camunda 8 using the official migration pattern described in https://github.com/camunda/camunda-7-to-8-migration-tooling/blob/main/code-conversion/patterns/ALL_IN_ONE.md. The refactored test must:
 
 - Use `@SpringBootTest` and `@CamundaSpringProcessTest`
 - Use `CamundaClient` to start the process
@@ -462,7 +464,7 @@ public class ApplicationTest {
       .hasAssignee("demo");
 
     // Using utility method to complete user task found by name
-    processTestContext.completeUserTask("Say hello to demo");
+    processTestContext.completeUserTask(UserTaskSelectors.byTaskName("Say hello to demo"));
 
     // Assert that it completed in the right end event, and that a Spring Bean hooked into the service task has written the expected process variable
     assertThat(processInstance) //
@@ -502,7 +504,7 @@ This test runs all green - so your process solution is migrated.
 
 With the migration of the solution being successful, let's look at migrating the running instances from Camunda 7 to Camunda 8. This is not required if you slowly drain out Camunda 7, see [Drain Out vs Big Bang](https://docs.camunda.io/docs/next/guides/migrating-from-camunda-7/migration-journey/#drain-out-vs-big-bang).
 
-We are using the [Camunda 7 to 8 Data Migrator](https://github.com/camunda/c7-data-migrator/) for this. Please make sure to check the [Migration Limitations](https://github.com/camunda/c7-data-migrator/tree/main?tab=readme-ov-file#migration-limitations) on what it can do and what it cannot do. For our example, it can migrate all running instances to Camunda 8.
+We are using the [Camunda 7 to 8 Data Migrator](https://github.com/camunda/camunda-7-to-8-migration-tooling/tree/main/data-migrator) for this. Please make sure to check the [Migration Limitations](https://docs.camunda.io/docs/next/guides/migrating-from-camunda-7/migration-tooling/data-migrator/limitations/) on what it can do and what it cannot do. For our example, it can migrate all running instances to Camunda 8.
 
 One important prerequisite for the data migrator is that you need an execution listener with job type `=if legacyId != null then "migrator" else "noop"` on the blank start event of your process:
 
