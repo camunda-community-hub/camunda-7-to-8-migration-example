@@ -22,9 +22,9 @@ You can find the **full source code** for this example in this repo:
 
 You will need at least these versions of the tools:
 
-- [Migration Analyzer & Diagram Converter](https://github.com/camunda/camunda-7-to-8-migration-tooling/tree/main/diagram-converter) >= 0.2.1
-- [Code Conversion OpenRewrite recipes](https://github.com/camunda/camunda-7-to-8-migration-tooling/tree/main/code-conversion/recipes) >= 0.2.1
-- [C7 Data Migrator](https://github.com/camunda/camunda-7-to-8-migration-tooling/tree/main/data-migrator) >= 0.2.1
+- [Migration Analyzer & Diagram Converter](https://github.com/camunda/camunda-7-to-8-migration-tooling/tree/main/diagram-converter) >= 0.3.0
+- [Code Conversion OpenRewrite recipes](https://github.com/camunda/camunda-7-to-8-migration-tooling/tree/main/code-conversion/recipes) >= 0.3.0
+- [C7 Data Migrator](https://github.com/camunda/camunda-7-to-8-migration-tooling/tree/main/data-migrator) >= 0.3.0
 
 ## The Camunda 7 Process Solution
 
@@ -176,7 +176,7 @@ Now run the [Code Conversion - OpenRewrite Recipes](https://github.com/camunda/c
                     <dependency>
                       <groupId>io.camunda</groupId>
                       <artifactId>camunda-7-to-8-code-conversion-recipes</artifactId>
-                      <version>0.2.1</version>
+                      <version>0.3.0</version>
                     </dependency>
                 </dependencies>
             </plugin>
@@ -348,7 +348,7 @@ Next up, you should cleanup your Maven dependencies. The recipe adds `spring-boo
 
 ```xml
 <properties>
-  <version.camunda>8.8.16</version.camunda>
+  <version.camunda>8.9.0</version.camunda>
 </properties>
 
 <dependencies>
