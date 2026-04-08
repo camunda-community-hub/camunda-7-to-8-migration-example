@@ -26,6 +26,14 @@ You will need at least these versions of the tools:
 - [Code Conversion OpenRewrite recipes](https://github.com/camunda/camunda-7-to-8-migration-tooling/tree/main/code-conversion/recipes) >= 0.3.0
 - [C7 Data Migrator](https://github.com/camunda/camunda-7-to-8-migration-tooling/tree/main/data-migrator) >= 0.3.0
 
+> **Note:** This repository pins Camunda 7 to `7.24.0` (community) so it can build without access to Camunda 7 enterprise artifacts. We recommend updating to the latest `7.24.x-ee` patch release in `process-solution-camunda-7/pom.xml` before running the example.
+
+```diff
+- <version.camunda>7.24.0</version.camunda>
++ <version.camunda>7.24.x-ee</version.camunda>
+```
+
+
 ## The Camunda 7 Process Solution
 
 ![The sample process](process.png)
@@ -163,7 +171,7 @@ Now run the [Code Conversion - OpenRewrite Recipes](https://github.com/camunda/c
             <plugin>
                 <groupId>org.openrewrite.maven</groupId>
                 <artifactId>rewrite-maven-plugin</artifactId>
-                <version>6.33.0</version>
+                <version>6.35.0</version>
                 <configuration>
                     <activeRecipes>
                         <recipe>io.camunda.migration.code.recipes.AllClientRecipes</recipe>
@@ -203,7 +211,7 @@ This will apply a set of refactorings as you can see in the logs:
 [WARNING] Changes have been made to process-solution-camunda-7/pom.xml by:
 [WARNING]     io.camunda.migration.code.recipes.AllClientRecipes
 [WARNING]         io.camunda.migration.code.recipes.AllClientPrepareRecipes
-[WARNING]             org.openrewrite.java.dependencies.AddDependency: {groupId=io.camunda, artifactId=spring-boot-starter-camunda-sdk, version=8.8.14}
+[WARNING]             org.openrewrite.java.dependencies.AddDependency: {groupId=io.camunda, artifactId=camunda-spring-boot-starter, version=8.9.0}
 [WARNING] Changes have been made to process-solution-camunda-7/src/main/java/org/camunda/community/migration/example/SampleJavaDelegate.java by:
 [WARNING]     io.camunda.migration.code.recipes.AllDelegateRecipes
 [WARNING]         io.camunda.migration.code.recipes.AllDelegatePrepareRecipes
@@ -344,7 +352,7 @@ A sample [JuelExpressionEvaluatorWorker](process-solution-camunda-8/src/main/jav
 
 ### Cleanup Maven Dependencies
 
-Next up, you should cleanup your Maven dependencies. The recipe adds `spring-boot-starter-camunda-sdk` as a dependency — this artifact has been renamed to `camunda-spring-boot-starter`, so make sure to use the updated name. You can also remove all remaining Camunda 7 dependencies, which might also cause changes around the Spring Boot version you are using. In our example - you might simply reduce dependencies to:
+Next up, you should cleanup your Maven dependencies. You can remove all Camunda 7 dependencies, which might also cause changes around the Spring Boot version you are using. In our example - you might simply reduce dependencies to:
 
 ```xml
 <properties>
